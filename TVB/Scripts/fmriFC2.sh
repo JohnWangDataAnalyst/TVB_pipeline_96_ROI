@@ -19,34 +19,23 @@
 # Ghent University, Belgium
 # Correspondence: hannelore.aerts@ugent.be
 # =============================================================================
-# IMPORTANT: adapt subID to name of your subject folder + set path to MRtrix2
-# (commands from MRtrix3 should run from terminal, by placing path to MRtrix3
-# in your bashrc file)
+# IMPORTANT: adapt subID to name of your subject folder
 # =============================================================================
 
 # Input
 #subID="PAT03T1"
-MRTrixDIR=/opt/mrtrix2/bin
 
 # Check input
-rootPath=$(pwd)
-subFolder=$(pwd)/subjects
-
-# Get information from batch track script in different variables
-batch=${subFolder}/${subID}/mrtrix_${numROI}/masks_${numROI}/batch_track.sh
-subjpath=${subFolder}/${subID}/mrtrix_${numROI}
-maskfolder=${subjpath}/masks_${numROI}
-seed=($(awk '{print $2}' $batch))
-seedCount=($(awk '{print $3}' $batch))
-roi=($(awk '{print $4}' $batch))
-itNum=($(awk 'END{print NR}' $batch))
+#rootPath=$(pwd)
+subFolder=${rootPath}/subjects
+SUBJECTS_DIR=${subFolder}/${subID}
 
 
-#### Fiber tracking
+fmri_results=${subFolder}/${subID}/bold
 
-for (( i = 100; i < 150; i++ ))
-do
-  echo "Iteration number $i from ${itNum} (start from 0)"
-  ${MRTrixDIR}/streamtrack SD_PROB ${subjpath}/fodf.mif -seed $maskfolder/seedmask${seed[i]}_1mm.nii.gz -include $maskfolder/targetmask${roi[i]}_1mm.nii.gz -minlength 30 -stop -mask ${subFolder}/${subID}/calc_images/wmmask_1mm_${numROI}.nii.gz -nomaskinterp -unidirectional -num ${seedCount[i]} ${subjpath}/tracks_${numROI}/${seed[i]}_tracksCN.tck
+cd $fmri_results
 
-done
+# Run FSL FEAT using the config created above
+#echo "check" $FSLDIR $SGE_ROOT "FSLSUBALREADYRUN"
+feat feat.fsf
+

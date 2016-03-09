@@ -39,13 +39,14 @@ maskfolder=${subjpath}/masks_${numROI}
 seed=($(awk '{print $2}' $batch))
 seedCount=($(awk '{print $3}' $batch))
 roi=($(awk '{print $4}' $batch))
+itNum=($(awk 'END{print NR}' $batch))
 
 
 #### Fiber tracking
 
-for (( i = 0; i < 348; i++ ))
+for (( i = 0; i < ${itNum+1}; i++ ))
 do
-  echo "Iteration number $i from 347 (start from 0)"
-  ${MRTrixDIR}/streamtrack SD_PROB ${subjpath}/fodf.mif -seed $maskfolder/seedmask${seed[i]}_1mm.nii.gz -include $maskfolder/targetmask${roi[i]}_1mm.nii.gz -minlength 30 -stop -mask ${subFolder}/${subID}/calc_images/wmmask_1mm_${numROI}.nii.gz -nomaskinterp -unidirectional -num ${seedCount[i]} ${subjpath}/tracks_68/${seed[i]}_tracksCN.tck
+  echo "Iteration number $i from ${itNum} (start from 0)"
+  ${MRTrixDIR}/streamtrack SD_PROB ${subjpath}/fodf.mif -seed $maskfolder/seedmask${seed[i]}_1mm.nii.gz -include $maskfolder/targetmask${roi[i]}_1mm.nii.gz -minlength 30 -stop -mask ${subFolder}/${subID}/calc_images/wmmask_1mm_${numROI}.nii.gz -nomaskinterp -unidirectional -num ${seedCount[i]} ${subjpath}/tracks_${numROI}/${seed[i]}_tracksCN.tck
 
 done

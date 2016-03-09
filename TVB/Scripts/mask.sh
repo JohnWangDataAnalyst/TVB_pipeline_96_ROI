@@ -33,9 +33,4 @@ subFolder=$(pwd)/subjects
 
 # Generate mask with octave
 cd ${rootPath}/matlab_scripts
-if [ "${numROI}" = "96" ]
-then
 octave --eval "addpath(genpath('${rootPath}/niak')); generateMasks('${numROI}','${subFolder}/${subID}/','${subFolder}/${subID}/')"
-else
-octave --eval "addpath(genpath('${rootPath}/niak')); generateMasksDK('${subFolder}/${subID}/','${subFolder}/${subID}/')"
-fi

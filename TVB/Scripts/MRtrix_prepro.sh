@@ -38,10 +38,10 @@ subFolder=$(pwd)/subjects
 # Copy WM masks to MRtrix folder
 cd ${subFolder}/${subID}/
 mkdir -p mrtrix_${numROI}
-cd mrtrix_${ROI}
+cd mrtrix_${numROI}
 ${MRTrixDIR}/mrconvert ${subFolder}/${subID}/calc_images/wmmask_${numROI}.nii.gz wmmask.mif
 ${MRTrixDIR}/mrconvert ${subFolder}/${subID}/calc_images/wmmask_1mm_${numROI}.nii.gz wmmask_1mm.mif
-mkdir -p tracks_${ROI}
+mkdir -p tracks_${numROI}
 
 #Convert RAWDATA to MRTrix Format
 ${MRTrixDIR}/mrconvert ${subFolder}/${subID}/RAWDATA/DTI/ dwi.mif
@@ -57,6 +57,6 @@ ${MRTrixDIR}/mrmult ev.mif fa_corr.mif ev_scaled.mif
 #Mask of single-fibre voxels
 ${MRTrixDIR}/erode wmmask.mif -npass 1 - | mrmult fa_corr.mif - - | threshold - -abs 0.7 sf.mif
 #Response function coefficient (use mrtrix3, old failed)
-${MRTrix3DIR}dwi2response dwi.mif response.txt -grad btable.b -mask sf.mif 
+${MRTrix3DIR}/dwi2response dwi.mif response.txt -grad btable.b -mask sf.mif 
 #CSD computation (use mrtrix3)
-${MRTrix3DIR}dwi2fod dwi.mif -grad btable.b response.txt -mask wmmask.mif fodf.mif
+${MRTrix3DIR}/dwi2fod dwi.mif -grad btable.b response.txt -mask wmmask.mif fodf.mif

@@ -36,12 +36,7 @@ cd ${subFolder}/${subID}/mrtrix_${numROI}/tracks_${numROI}
 if [ ! -f "compSCcommand.txt" ]; then
 	for i in {1..${numROI}}
 	do
-	 if [ "${numROI}" = "96" ]
-	 then
 	 echo "computeSC_cluster('${numROI}','./','_tracks${subID}.tck','../masks_${numROI}/wmborder.mat',${i},'SC_row_${i}${subID}.mat')" >> compSCcommand.txt
-	 else
-	 echo "computeSC_clusterDK('./','_tracks${subID}.tck','../masks_${numROI}/wmborder.mat',${i},'SC_row_${i}${subID}.mat')" >> compSCcommand.txt
-	 fi
 	done
 fi
 
