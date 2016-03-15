@@ -26,21 +26,22 @@
 
 # Input
 #subID="PAT03T1"
-#MRTrixDIR=/home/hannelore/mrtrix2/bin
-#MRTrix3DIR=$HOME/local/MRtrix3bin
+MRTrixDIR=/opt/mrtrix2/bin
+MRTrix3DIR=/opt/mrtrix3/bin
+
 # Check input
-#rootPath=$(pwd)
-subFolder=${rootPath}/subjects
+rootPath=$(pwd)
+subFolder=$(pwd)/subjects
 
 #############################################################
 
 # Copy WM masks to MRtrix folder
 cd ${subFolder}/${subID}/
-mkdir -p mrtrix_68
-cd mrtrix_68
-${MRTrixDIR}/mrconvert ${subFolder}/${subID}/calc_images/wmmask_68.nii.gz wmmask.mif
-${MRTrixDIR}/mrconvert ${subFolder}/${subID}/calc_images/wmmask_1mm_68.nii.gz wmmask_1mm.mif
-mkdir -p tracks_68
+mkdir -p mrtrix_${numROI}
+cd mrtrix_${numROI}
+${MRTrixDIR}/mrconvert ${subFolder}/${subID}/calc_images/wmmask_${numROI}.nii.gz wmmask.mif
+${MRTrixDIR}/mrconvert ${subFolder}/${subID}/calc_images/wmmask_1mm_${numROI}.nii.gz wmmask_1mm.mif
+mkdir -p tracks_${numROI}
 
 #Convert RAWDATA to MRTrix Format
 ${MRTrixDIR}/mrconvert ${subFolder}/${subID}/RAWDATA/DTI/ dwi.mif
@@ -59,7 +60,3 @@ ${MRTrixDIR}/erode wmmask.mif -npass 1 - | mrmult fa_corr.mif - - | threshold - 
 ${MRTrix3DIR}/dwi2response dwi.mif response.txt -grad btable.b -mask sf.mif 
 #CSD computation (use mrtrix3)
 ${MRTrix3DIR}/dwi2fod dwi.mif -grad btable.b response.txt -mask wmmask.mif fodf.mif
-
-
-
-

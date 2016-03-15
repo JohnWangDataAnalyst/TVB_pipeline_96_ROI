@@ -26,26 +26,20 @@
 #subID="PAT03T1"
 
 # Check input
-#rootPath=$(pwd)
-subFolder=${rootPath}/subjects
+rootPath=$(pwd)
+subFolder=$(pwd)/subjects
 
-cp ${rootPath}/matlab_scripts/*.m ${subFolder}/${subID}/mrtrix_68/tracks_68
-cd ${subFolder}/${subID}/mrtrix_68/tracks_68
+cp ${rootPath}/matlab_scripts/*.m ${subFolder}/${subID}/mrtrix_${numROI}/tracks_${numROI}
+cd ${subFolder}/${subID}/mrtrix_${numROI}/tracks_${numROI}
 
 # Generate a set of commands for the SC-jobs...
 if [ ! -f "compSCcommand.txt" ]; then
-	for i in {1..68}
+	for i in {1..${numROI}}
 	do
-	 echo "computeSC_clusterDK('./','_tracks${subID}.tck','../masks_68/wmborder.mat',${i},'SC_row_${i}${subID}.mat')" >> compSCcommand.txt
+	 echo "computeSC_cluster('${numROI}','./','_tracks${subID}.tck','../masks_${numROI}/wmborder.mat',${i},'SC_row_${i}${subID}.mat')" >> compSCcommand.txt
 	done
 fi
 
 # Compute SC matrices
 octaveCommand=$(<compSCcommand.txt)
 octave --eval "${octaveCommand}"
-
-
-
-
-
-

@@ -26,9 +26,9 @@
 #subID="PAT03T1"
 
 # Check input
-#rootPath=$(pwd)
-subFolder=${rootPath}/subjects
-cd ${subFolder}/${subID}/mrtrix_68/tracks_68
+rootPath=$(pwd)
+subFolder=$(pwd)/subjects
+cd ${subFolder}/${subID}/mrtrix_${numROI}/tracks_${numROI}
 
 # Convert the results into TVB format
 octave --eval "connectivity2TVBFS('${subID}','${subFolder}/${subID}','${subID}_SC.mat','recon_all')"
@@ -36,27 +36,22 @@ octave --eval "connectivity2TVBFS('${subID}','${subFolder}/${subID}','${subID}_S
 #Gather all the results in a single folder
 resultFolder=${subFolder}/${subID}/results
 #SC Matrices
-cp ${subFolder}/${subID}/mrtrix_68/tracks_68/${subID}_SC.mat ${resultFolder}/${subID}_SC.mat
+cp ${subFolder}/${subID}/mrtrix_${numROI}/tracks_${numROI}/${subID}_SC.mat ${resultFolder}/${subID}_SC.mat
 #FC matrices
 if [ -d "$subFolder/$subID/RAWDATA/BOLD-EPI" ]; then
   cp ${subFolder}/${subID}/bold/${subID}_fMRI_new.mat ${resultFolder}/${subID}_fMRI_new.mat
 fi
 
 #Clean the results
-rm ${subFolder}/${subID}/mrtrix_68/tracks_68/*.tck
+rm ${subFolder}/${subID}/mrtrix_${numROI}/tracks_${numROI}/*.tck
 
 #Remove the RAWDATA
 #rm -R ${subFolder}/${subID}/RAWDATA
 
 #Remove some residual mrtrix-data, just in case there where some minor errors which might lead to a huge bloat of the folder size by not deleting
 #tmp-files correctly...
-#rm -f ${subFolder}/${subID}/mrtrix_68/masks_68/mrtrix-*.nii
+#rm -f ${subFolder}/${subID}/mrtrix_${numROI}/masks_${numROI}/mrtrix-*.nii
 
 #Tie up the download package...
 #cd ${subFolder}
 #tar -zcvf ${subID}_downloadData.tar.gz ${subID}/ && rm -R ${subID}/
-
-
-
-
-

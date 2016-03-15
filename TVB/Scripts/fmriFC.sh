@@ -23,11 +23,11 @@
 # =============================================================================
 
 # Input
-#subID="PAT03T1"
+subID="PAT03T1"
 
 # Check input
-#rootPath=$(pwd)
-subFolder=${rootPath}/subjects
+rootPath=$(pwd)
+subFolder=$(pwd)/subjects
 SUBJECTS_DIR=${subFolder}/${subID}
 
 # Create results folder
