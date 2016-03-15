@@ -164,17 +164,20 @@ while(nnz(greymatter == 1) > 0)
     indx = 1;
 
     %Loop over all Nonzero-Voxels in the GM
-    for z = 3:size(greymatter,3)-2
+    %for z = 3:size(greymatter,3)-2
+    for z = 3:(size(greymatter,3)-2)
         [x_vec, y_vec] = find(greymatter(:,:,z) == 1);
         if (max(max(greymatter(:,:,z))) > 0 && ~isempty(x_vec)) %If the whole slice is Zero or already evaluated we can skip it!
             for i=1:size(x_vec,1)
                 x = x_vec(i);
                 y = y_vec(i);
-                #if (x > 1 && x< size(greymatter,1) && y > 1 && y < size(greymatter, 2))
+                %if (x > 2 && x< size(greymatter,1)-1 && y > 2 && y < size(greymatter, 2)-1)
                 neighborhood = greymatter(x-search_radius:x+search_radius,y-search_radius:y+search_radius,z-search_radius:z+search_radius);
-                #neighborhood = neighborhood(neighborhood > 1); %Cut out the Zeros and Ones
+                %neighborhood = neighborhood(neighborhood > 0); %Cut out the Zeros and Ones
+                
                 [m,f,c] = mode(neighborhood(:));
-                #end
+                %end
+
                 if(size(c{1},1) == 1) %If there are two mode-values (or more) we skip this point and hopefully the situation gets cleared during a further cycle
                     nb_store(indx,:) = [x y z m f];
                     indx = indx + 1;
@@ -228,7 +231,9 @@ wm_outline.img(wm_outline.img > 1) = 1;
 wm_outline.img(nii.img == 0) = 0;
 
 haystack = zeros(nnz(greymatter),3);
+nnz(greymatter)
 needle = zeros(nnz(wm_outline.img),3);
+nnz(greymatter)
 
 %wm_outline and greymatter must have the same img_size!
 %Go through the Greymatter/wm_outline to build the index
@@ -236,10 +241,32 @@ needle = zeros(nnz(wm_outline.img),3);
 %computation!
 hay_count = 1;
 needle_count = 1;
-for x = 3:size(greymatter,1)-3
+size(greymatter)
+size(wm_outline.img)
+
+if size(greymatter,1) > size(wm_outline.img,1)
+  len_x = size(wm_outline.img,1)
+else
+  len_x = size(wm_outline.img,1)
+end
+
+if size(greymatter,2) > size(wm_outline.img,2)
+  len_y = size(wm_outline.img,2)
+else
+  len_y = size(wm_outline.img,2)
+end
+
+if size(greymatter,3) > size(wm_outline.img,3)
+  len_z = size(wm_outline.img,3)
+else
+  len_z = size(wm_outline.img,1)
+end
+
+
+for x = 3:(len_x-3)
    if (max(max(greymatter(x,:,:))) > 0 && max(max(wm_outline.img(x,:,:))) > 0) %Skip the next loops if the whole slice is zero anyway
-       for y = 3:size(greymatter,2)-3
-          for z = 3:size(greymatter,3)-3
+       for y = 3:(len_y-3)
+          for z = 3:(len_z-3)
              if (greymatter(x,y,z) > 0)
                  haystack(hay_count,:) = [x y z];
                  hay_count = hay_count + 1;
@@ -253,21 +280,33 @@ for x = 3:size(greymatter,1)-3
    end
 end
 
-[IDX,D] = knnsearch(haystack,needle);
 
+%we need substract one from counter
+[IDX,D] = knnsearch(needle(1:(needle_count-1),:),haystack(1:(hay_count-1),:));
+hay_count
+needle_count
+size(IDX)
+size(D)
 %Set all Values in the wm_outline that have no match within X Voxel
 %Distance to Zero (i.e. the Subcortical border...)
 VoxelDist = 1.5;
 
 I = find(D > VoxelDist);
+if ~isempty(I)
+max(I)
+min(I)
+size(I) 
 for x = 1:size(I,1)
-    wm_outline.img(needle(IDX(I(x)),1),needle(IDX(I(x)),2),needle(IDX(I(x)),3)) = 0;
+    wm_outline.img(needle(I(x),1),needle(I(x),2),needle(I(x),3)) = 0;
+end
 end
 
 %Assign each remaing value it's nearest Neighbour from the GM-Parcellation
 I = find(D <= VoxelDist);
+if ~isempty(I) 
 for x = 1:size(I,1)
-    wm_outline.img(needle(IDX(I(x)),1),needle(IDX(I(x)),2),needle(IDX(I(x)),3)) = greymatter(haystack(IDX(I(x)),1),haystack(IDX(I(x)),2),haystack(IDX(I(x)),3));
+    wm_outline.img(needle(I(x),1),needle(I(x),2),needle(I(x),3)) = greymatter(haystack(IDX(I(x)),1),haystack(IDX(I(x)),2),haystack(IDX(I(x)),3));
+end
 end
 
 clear hay_count x y z needle_count IDX I D needle haystack

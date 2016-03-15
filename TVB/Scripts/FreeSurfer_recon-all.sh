@@ -24,17 +24,18 @@
 
 # Input
 #subID="PAT03T1"
+#FreesurferDIR=/opt/freesurfer/bin
 
 # Check input
-rootPath=$(pwd)
-subFolder=$(pwd)/subjects
+#rootPath=$(pwd)
+subFolder=${rootPath}/subjects
 
 #############################################################
 
 echo "*** Load data & recon_all ***"
 firstFile=$(ls ${subFolder}/${subID}/RAWDATA/MPRAGE/ | sort -n | head -1)
 
-recon-all -i ${subFolder}/${subID}/RAWDATA/MPRAGE/${firstFile} -subjid recon_all -sd ${subFolder}/${subID} -all 
+recon-all -i ${subFolder}/${subID}/RAWDATA/MPRAGE/${firstFile} -subjid recon_all -sd ${subFolder}/${subID}  -all
 
 mri_convert --in_type mgz --out_type nii --out_orientation RAS ${subFolder}/${subID}/recon_all/mri/aparc+aseg.mgz ${subFolder}/${subID}/recon_all/mri/aparc+aseg.nii
 

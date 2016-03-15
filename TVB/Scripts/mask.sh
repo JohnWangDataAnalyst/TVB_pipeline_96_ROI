@@ -26,11 +26,11 @@
 #subID="PAT03T1"
 
 # Check input
-rootPath=$(pwd)
-subFolder=$(pwd)/subjects
+#rootPath=$(pwd)
+subFolder=${rootPath}/subjects
 
 #############################################################
 
 # Generate mask with octave
 cd ${rootPath}/matlab_scripts
-octave --eval "addpath(genpath('${rootPath}/niak')); generateMasks('${numROI}','${subFolder}/${subID}/','${subFolder}/${subID}/')"
+octave --eval "addpath(genpath('${rootPath}/niak')); generateMasksDK('${subFolder}/${subID}/','${subFolder}/${subID}/')"
