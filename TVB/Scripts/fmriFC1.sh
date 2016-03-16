@@ -54,9 +54,12 @@ numVox=$(fslstats bold.nii.gz -v | cut -f 1 -d " ")
 # Convert freesurfer brainmask to NIFTI
 mri_convert --in_type mgz --out_type nii ${SUBJECTS_DIR}/recon_all/mri/brainmask.mgz brainmask.nii.gz
 
+<<<<<<< HEAD
 
 
 
+=======
+>>>>>>> f6056c39dfd802e05a7bdf58fa6e25ad751cd2d5
 # Mask the brainmask using aparc+aseg
 mri_convert --in_type mgz --out_type nii ${SUBJECTS_DIR}/recon_all/mri/aparc+aseg.mgz aparc+aseg.nii.gz
 fslmaths brainmask.nii.gz -nan brainmask.nii.gz

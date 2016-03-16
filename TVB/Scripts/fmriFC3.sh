@@ -43,6 +43,7 @@ flirt -in featDir.feat/mean_func.nii.gz -ref brainmask.nii.gz -out exfunc2anat_6
 # Invert transformation
 convert_xfm -omat anat2exfunc.mat -inverse exfunc2anat_6DOF.mat
 
+<<<<<<< HEAD
 
 if ${numROI} == 96
 then
@@ -54,6 +55,10 @@ end
 
 # Transform roimask to functional space using FLIRT (using Nearest Neighbor Interpolation for roimask)
 flirt -in ${roimask} -applyxfm -init anat2exfunc.mat -out featDir.feat/reg/freesurfer/aparc+aseg.nii.gz \
+=======
+# Transform roimask to functional space using FLIRT (using Nearest Neighbor Interpolation for roimask)
+flirt -in aparc+aseg.nii.gz -applyxfm -init anat2exfunc.mat -out featDir.feat/reg/freesurfer/aparc+aseg.nii.gz \
+>>>>>>> f6056c39dfd802e05a7bdf58fa6e25ad751cd2d5
 -paddingsize 0.0 -interp nearestneighbour -ref featDir.feat/mean_func.nii.gz
 
 # Export average region time-series

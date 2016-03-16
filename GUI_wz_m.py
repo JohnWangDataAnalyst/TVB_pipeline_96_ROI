@@ -222,7 +222,10 @@ def EnvironSet(entries):
             os.environ[key] = EnvironVariablesDict[key]
         os.environ["subID"] = entries["Object ID"].get()
         os.environ["numROI"] = entries["Number of ROI"].get()
+<<<<<<< HEAD
         os.environ["rootPath"] = entries["Working Directory"].get()
+=======
+>>>>>>> f6056c39dfd802e05a7bdf58fa6e25ad751cd2d5
 
         for source in SourceList:
             command = ['bash', '-c', 'source '+source]
