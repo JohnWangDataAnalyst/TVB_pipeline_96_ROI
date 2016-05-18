@@ -26,6 +26,7 @@ EnvironVariablesDict = {"SGE_ROOT":"/usr/local/ge2011.11/",\
 PathList = ["/home/jwang/codes/fsl/bin:/opt/afni:/usr/local/ge2011.11/bin/linux-x64:/sbin"]
 
 SourceList = ["/opt/source/octave.sh", \
+              "/opt/source/matlab.sh",\
               "/opt/source/afni_fsl.sh",\
               "/opt/source/freesurfer.sh",\
               "/opt/freesurfer/SetUpFreeSurfer.sh",\
@@ -52,7 +53,7 @@ echo \"*************************************************************\"\n\
 #unset SGE_ROOT \n",
 
 "T1 Prerocessing with FreeSurfer":"echo \"************ T1 preprocessing with FreeSurfer *******\"\n\
-qsub -V -q bigmem_16.q -l h_vmem=16G -cwd -N reconAll_${subID} ${scripts_path}/FreeSurfer_recon-all.sh \n",
+qsub -V -q parallel.q -pe mcore 8 -cwd -N reconAll_${subID} ${scripts_path}/FreeSurfer_recon-all.sh \n",
 
 
 "DWI Prerocessing with FreeSurfer":"echo \"********** DWI preprocessing with FreeSurfer ********\"\n\
@@ -63,25 +64,30 @@ qsub -hold_jid reconAll_${subID} -V -q bigmem_16.q -l h_vmem=16G -cwd -N dtRecon
 qsub -hold_jid dtRecon_${subID} -V -q bigmem_16.q -l h_vmem=16G -cwd -N mrPre_${subID} ${scripts_path}/MRtrix_prepro.sh\n",
 
 "fMRI Preprocessing": "echo \"**************** fMRI preprocessing *****************\"\n\
-qsub -hold_jid reconAll_${subID} -V -q bigmem_16.q -l h_vmem=16G -cwd -N fmri_1_${subID} ${scripts_path}/fmriFC1.sh\n\
+qsub -hold_jid reconAll_${subID}  -V -q bigmem_16.q -l h_vmem=16G -cwd  -N fmri_1_${subID} ${scripts_path}/fmriFC1.sh\n\
 qsub -hold_jid fmri_1_${subID} -V -q bigmem_16.q -l h_vmem=16G -cwd -N fmri_2_${subID} ${scripts_path}/fmriFC2.sh\n\
-qsub -hold_jid feat5_stop -V -q bigmem_16.q -l h_vmem=16G -cwd -N fmri_3_${subID} ${scripts_path}/fmriFC3.sh\n",
+qsub -hold_jid fmri_2_${subID},feat5_stop -V -q bigmem_16.q -l h_vmem=16G -cwd -N fmri_3_${subID} ${scripts_path}/fmriFC3.sh\n",
 
 "Generate mask": "echo \"****************** Generate mask ********************\"\n\
-qsub -hold_jid dtRecon_${subID} -V -q bigmem_16.q -l h_vmem=16G -cwd -N mask_${subID} ${scripts_path}/mask.sh\n",
+qsub -hold_jid mrPre_${subID} -V -q bigmem_16.q -l h_vmem=16G -cwd -N mask_${subID} ${scripts_path}/mask.sh\n",
 
 "Tracking": "echo \"********************* Tracking **********************\"\n\
-qsub -hold_jid mask_${subID} -V -q bigmem_16.q -l h_vmem=16G -cwd -N tracking_1_${subID} ${scripts_path}/runTracking1.sh\n\
-qsub -hold_jid mask_${subID} -V -q bigmem_16.q -l h_vmem=16G -cwd -N tracking_2_${subID} ${scripts_path}/runTracking2.sh\n\
-qsub -hold_jid mask_${subID} -V -q bigmem_16.q -l h_vmem=16G -cwd -N tracking_3_${subID} ${scripts_path}/runTracking3.sh\n\
-qsub -hold_jid mask_${subID} -V -q bigmem_16.q -l h_vmem=16G -cwd -N tracking_4_${subID} ${scripts_path}/runTracking4.sh\n\
-qsub -hold_jid mask_${subID} -V -q bigmem_16.q -l h_vmem=16G -cwd -N tracking_5_${subID} ${scripts_path}/runTracking5.sh\n",
+qsub -hold_jid mask_${subID} -V -q parallel.q -cwd -N tracking_1_${subID} ${scripts_path}/runTracking1.sh\n\
+qsub -hold_jid mask_${subID} -V -q parallel.q -cwd -N tracking_2_${subID} ${scripts_path}/runTracking2.sh\n\
+qsub -hold_jid mask_${subID} -V -q parallel.q -cwd -N tracking_3_${subID} ${scripts_path}/runTracking3.sh\n\
+qsub -hold_jid mask_${subID} -V -q parallel.q -cwd -N tracking_4_${subID} ${scripts_path}/runTracking4.sh\n\
+qsub -hold_jid mask_${subID} -V -q parallel.q -cwd -N tracking_5_${subID} ${scripts_path}/runTracking5.sh\n",
 
 "Compute SC matrix":"echo \"************** Compute SC matrix  *******************\"\n\
-qsub -hold_jid tracking_1_${subID},tracking_2_${subID},tracking_3_${subID},tracking_4_${subID},tracking_5_${subID} -V -q bigmem_16.q -l h_vmem=16G -cwd -N SC_${subID} ${scripts_path}/computeSC.sh\n",
+qsub -hold_jid tracking_1_${subID},tracking_2_${subID},tracking_3_${subID},tracking_4_${subID},tracking_5_${subID}  -V -q parallel.q -cwd -N SC_${subID}_1 ${scripts_path}/computeSC1.sh\n\
+qsub -hold_jid tracking_1_${subID},tracking_2_${subID},tracking_3_${subID},tracking_4_${subID},tracking_5_${subID}  -V -q parallel.q -cwd -N SC_${subID}_2 ${scripts_path}/computeSC2.sh\n\
+qsub -hold_jid tracking_1_${subID},tracking_2_${subID},tracking_3_${subID},tracking_4_${subID},tracking_5_${subID}  -V -q parallel.q -cwd -N SC_${subID}_3 ${scripts_path}/computeSC3.sh\n\
+qsub -hold_jid tracking_1_${subID},tracking_2_${subID},tracking_3_${subID},tracking_4_${subID},tracking_5_${subID}  -V -q parallel.q -cwd -N SC_${subID}_4 ${scripts_path}/computeSC4.sh\n\
+qsub -hold_jid tracking_1_${subID},tracking_2_${subID},tracking_3_${subID},tracking_4_${subID},tracking_5_${subID}  -V -q parallel.q -cwd -N SC_${subID}_5 ${scripts_path}/computeSC5.sh\n\
+qsub -hold_jid tracking_1_${subID},tracking_2_${subID},tracking_3_${subID},tracking_4_${subID},tracking_5_${subID}  -V -q parallel.q -cwd -N SC_${subID}_6 ${scripts_path}/computeSC6.sh\n",
 
 "Aggregate SC matrix":"echo \"************** Aggregate SC matrix  *****************\"\n\
-qsub -hold_jid SC_${subID} -V -q bigmem_16.q -l h_vmem=16G -cwd -N aggSC_${subID} ${scripts_path}/aggregateSC.sh\n",
+qsub -hold_jid SC_${subID}_1,SC_${subID}_2,SC_${subID}_3,SC_${subID}_4,SC_${subID}_5,SC_${subID}_6 -V -q bigmem_16.q -l h_vmem=16G -cwd -N aggSC_${subID} ${scripts_path}/aggregateSC.sh\n",
 
 "Convert to TVB format and clean up results":"echo \"**** Convert to TVB format and clean up results  ****\"\n\
 qsub -hold_jid aggSC_${subID},tracking_5_${subID} -V -q bigmem_16.q -l h_vmem=16G -cwd -N convert_${subID} ${scripts_path}/convert2TVB.sh\n"}
@@ -141,6 +147,7 @@ def makeform_check(root, fields):
 
 def WDprocessing(entries):
     global WDprocessing_index
+    ans_cf = input("copy scripts? y/n")
     if WDprocessing_index == 1:
         ans_wd = input("changing working directory? y/n")
         ans_sub = input("changing working subject? y/n")
@@ -161,7 +168,7 @@ def WDprocessing(entries):
                     print("please input valid"+" "+ key)
                     Path_Check_Correct  = False
 
-    if Path_Check_Correct and (WDprocessing_index == 0 or (WDprocessing_index == 1 and ans_wd.lower() in ["y", "yes"])):
+    if Path_Check_Correct and ans_cf in ["y", "yes"] and (WDprocessing_index == 0 or (WDprocessing_index == 1 and ans_wd.lower() in ["y", "yes"])):
         #current_path = os.getcwd()
         distutils.dir_util.copy_tree(curWD+"/TVB", entries["Working Directory"].get())
 
@@ -222,10 +229,6 @@ def EnvironSet(entries):
             os.environ[key] = EnvironVariablesDict[key]
         os.environ["subID"] = entries["Object ID"].get()
         os.environ["numROI"] = entries["Number of ROI"].get()
-<<<<<<< HEAD
-        os.environ["rootPath"] = entries["Working Directory"].get()
-=======
->>>>>>> f6056c39dfd802e05a7bdf58fa6e25ad751cd2d5
 
         for source in SourceList:
             command = ['bash', '-c', 'source '+source]
