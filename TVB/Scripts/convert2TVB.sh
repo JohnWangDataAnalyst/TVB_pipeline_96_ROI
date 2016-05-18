@@ -31,19 +31,19 @@ subFolder=$(pwd)/subjects
 cd ${subFolder}/${subID}/mrtrix_${numROI}/tracks_${numROI}
 
 # Convert the results into TVB format
-octave --eval "connectivity2TVBFS('${subID}','${subFolder}/${subID}','${subID}_SC.mat','recon_all')"
+octave --eval "connectivity2TVBFS('${numROI}','${subID}','${subFolder}/${subID}','${subID}_SC.mat','recon_all')"
 
 #Gather all the results in a single folder
 resultFolder=${subFolder}/${subID}/results
 #SC Matrices
 cp ${subFolder}/${subID}/mrtrix_${numROI}/tracks_${numROI}/${subID}_SC.mat ${resultFolder}/${subID}_SC.mat
 #FC matrices
-if [ -d "$subFolder/$subID/RAWDATA/BOLD-EPI" ]; then
-  cp ${subFolder}/${subID}/bold/${subID}_fMRI_new.mat ${resultFolder}/${subID}_fMRI_new.mat
-fi
+#if [ -d "$subFolder/$subID/RAWDATA/BOLD-EPI" ]; then
+#  cp ${subFolder}/${subID}/bold/${subID}_fMRI_new.mat ${resultFolder}/${subID}_fMRI_new.mat
+#fi
 
 #Clean the results
-rm ${subFolder}/${subID}/mrtrix_${numROI}/tracks_${numROI}/*.tck
+#rm ${subFolder}/${subID}/mrtrix_${numROI}/tracks_${numROI}/*.tck
 
 #Remove the RAWDATA
 #rm -R ${subFolder}/${subID}/RAWDATA

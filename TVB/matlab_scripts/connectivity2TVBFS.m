@@ -1,4 +1,4 @@
-function connectivity2TVBFS(subID,subFolder,SC_matrix,reconallFolder)
+function connectivity2TVBFS(numROI,subID,subFolder,SC_matrix,reconallFolder)
 % Usage: function connectivity2TVBFS(subID,subFolder,SC_matrix,reconallFolder)
 % INPUT:
 %   subID               ---     The identifier of the subject (must also be
@@ -59,7 +59,7 @@ mkdir('results')
 cd results
 
 %Load the SC Matrices
-SC = load([subFolder '/mrtrix_68/tracks_68/' SC_matrix]);
+SC = load([subFolder '/mrtrix_' numROI '/tracks_' numROI '/' SC_matrix]);
 weights = SC.SC_cap_agg_bwflav2;
 %Check if the delay-matrix is in the new or the old formatting
 if (isfield(SC,'SC_dist_mean_agg'))
@@ -98,9 +98,9 @@ end
 labeled_vertices = [cortexMesh.Vertices labels];
 
 %Create Labels
-labels = cell(1,68);
-labels(1:34) = strcat('lh_',lh_colortable.struct_names([2:4 6:end]));
-labels(35:end) = strcat('rh_',rh_colortable.struct_names([2:4 6:end]));
+labels = cell(1,str2num(numROI));
+labels(1:48) = strcat('lh_',lh_colortable.struct_names([2:4 6:end]));
+labels(49:end) = strcat('rh_',rh_colortable.struct_names([2:4 6:end]));
 
 %% 1.Weights
 %weights = weights;
@@ -111,7 +111,7 @@ save(files{1},'weights','-ascii')
 %Calculate the Centers of the Regions:
 %Here i'll just take the mean of all vertice-coordinates belonging to a
 %Region.
-centers = zeros(68,3);
+centers = zeros(str2num(numROI),3);
 for r = 1:size(centers,1)
     %First get all Vertices corresponding to a Region
     regionVertices = labeled_vertices(labeled_vertices(:,4) == r,1:3);
@@ -142,7 +142,7 @@ files{3} ='tract.txt';
 save(files{3},'delay','-ascii')
 
 %% 4. Orientation
-orientation = zeros(68,3);
+orientation = zeros(str2num(numROI),3);
 
 for r = 1:size(orientation,1)
     %First get all Vertex-Normals corresponding to the Vertices of a Region
@@ -160,7 +160,7 @@ dlmwrite(files{4},orientation,'delimiter',' ','precision',20);
 %so for now i just count the surface vertices corresponding to each region
 %EDIT: According to the TVB Dokumentation, this attribute is not mandatory
 %for the Input!
-area = zeros(68,1);
+area = zeros(str(numROI),1);
 for r = 1:size(area,1)
     area(r) = nnz(labeled_vertices(:,4) == r);
 end
@@ -169,7 +169,7 @@ dlmwrite(files{5},area,'delimiter',' ','precision',20);
 
 %% 6. Cortical
 %All areas are cortical, hence
-cortical = ones(68,1);
+cortical = ones(str2num(numROI),1);
 files{6} = 'cortical.txt';
 dlmwrite(files{6},cortical,'delimiter',' ','precision',20);
 

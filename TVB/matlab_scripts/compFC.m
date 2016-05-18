@@ -1,4 +1,4 @@
-function compFC(path,subName)
+function compFC(numROI,path,subName)
 %Runtime on a MacBook Pro 2011 Core i3: ~5 Sec
 %Input:     Full path to the folder holding the aparc_stats.txt %
 %           subID_ROIts.dat
@@ -38,18 +38,19 @@ function compFC(path,subName)
 datFile = dir([path '/*_ROIts.dat']);
 datFile = datFile.name;
 fMRI = dlmread([path '/' datFile]);
-
+size(fMRI)
 %Read the ROI-Table
 statFile = dir([path '/aparc*stats_cleared*']);
 statFile = statFile(1).name;
 %ROI_ID_table = importfile([path '/' statFile]);
 ROI_ID_table = dlmread([path '/' statFile]);
-
+numRow = size(ROI_ID_table,1)
 %Clear the ROI-Table and leave only Desikan-Entries
-start1=size(ROI_ID_table,1)-68;
-stop1=start1+34-1;
-start2=stop1+2;
-stop2=size(ROI_ID_table,1);
+start1 = numRow- str2num(numROI)
+stop1 = start1+int64(str2num(numROI) / 2) -1
+start2 = stop1+2
+stop2 = numRow
+
 fMRI_DK68 = fMRI(:,[start1:stop1 start2:stop2]);
 
 %Compute FC
@@ -66,11 +67,11 @@ FC_cc_DK68 = FC_cc([start1:stop1 start2:stop2],[start1:stop1 start2:stop2]);
 v = genvarname([subName '_ROIts']);
 eval([v '= fMRI;']);
 
-v = genvarname([subName '_ROIts_DK68']);
+v = genvarname([subName '_ROIts', numROI]);
 eval([v '= fMRI_DK68;']);
 
 %save([path '/' subName '_fMRI_new.mat'],[subName '_ROIts'],'FC_cc','FC_mi','ROI_ID_table');
-save([path '/' subName '_fMRI_new.mat'],'-mat7-binary',[subName '_ROIts'],[subName '_ROIts_DK68'],'FC_cc_DK68','FC_cc','FC_mi','ROI_ID_table');
+save([path '/' subName '_fMRI_new.mat'],'-mat7-binary',[subName '_ROIts'],[subName '_ROIts', numROI],'FC_cc_DK68','FC_cc','FC_mi','ROI_ID_table');
 
 end
 

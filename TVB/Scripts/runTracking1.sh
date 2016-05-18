@@ -47,6 +47,10 @@ itNum=($(awk 'END{print NR}' $batch))
 for (( i = 0; i < $(echo "${itNum} / 5" | bc); i++ ))
 do
   echo "Iteration number $i from ${itNum} (start from 0)"
-  ${MRTrixDIR}/streamtrack SD_PROB ${subjpath}/fodf.mif -seed $maskfolder/seedmask${seed[i]}_1mm.nii.gz -include $maskfolder/targetmask${roi[i]}_1mm.nii.gz -minlength 30 -stop -mask ${subFolder}/${subID}/calc_images/wmmask_1mm_${numROI}.nii.gz -nomaskinterp -unidirectional -num ${seedCount[i]} ${subjpath}/tracks_${numROI}/${seed[i]}_tracksCN.tck
+  #{MRTrixDIR}/streamtrack SD_PROB ${subjpath}/fodf.mif -seed $maskfolder/seedmask${seed[i]}_1mm.nii.gz -include $maskfolder/targetmask${roi[i]}_1mm.nii.gz -minlength 1  -stop -mask ${subFolder}/${subID}/calc_images/wmmask_1mm_${numROI}.nii.gz -nomaskinterp -unidirectional -num ${seedCount[i]} ${subjpath}/tracks_${numROI}/${seed[i]}_tracksCN.tck -trials 500
+
+  #{MRTrix3Dir}/tckgen ${subjpath}/fodf.mif ${subjpath}/tracks_${numROI}/${seed[i]}_tracksCN.tck -algorithm ifod2 -seed_image $maskfolder/seedmask${seed[i]}_1mm.nii.gz -include $maskfolder/targetmask${roi[i]}_1mm.nii.gz -minlength 1  -stop -mask ${subFolder}/${subID}/calc_images/wmmask_1mm_${numROI}.nii.gz -nomaskinterp -unidirectionnal -num ${seedCount[i]} -trials 500
+
+   ${MRTrix3DIR}/tckgen ${subjpath}/fodf.mif ${subjpath}/tracks_${numROI}/${seed[i]}_tracksCN.tck -algorithm ifod2 -seed_image $maskfolder/seedmask${seed[i]}_1mm.nii.gz -include $maskfolder/targetmask${roi[i]}_1mm.nii.gz -minlength 10  -stop -mask ${subFolder}/${subID}/calc_images/wmmask_1mm_${numROI}.nii.gz -num ${seedCount[i]} -trials 50
 
 done

@@ -46,6 +46,12 @@ mkdir -p tracks_${numROI}
 #Convert RAWDATA to MRTrix Format
 ${MRTrixDIR}/mrconvert ${subFolder}/${subID}/RAWDATA/DTI/ dwi.mif
 ${MRTrixDIR}/mrinfo ${subFolder}/${subID}/RAWDATA/DTI/ -grad btable.b
+#######################################################################
+## for two dwi scans
+#{MRTrixDIR}/mrconvert ${subFolder}/${subID}/RAWDATA/DTI/dwi.nii.gz dwi.mif
+#{MRTrixDIR}/mrinfo ${subFolder}/${subID}/RAWDATA/DTI/ -grad btable.b
+#cat ${subFolder}/${subID}/dt_recon/btable1.b ${subFolder}/${subID}/dt_recon/btable2.b > btable.b
+################################################################################
 
 #DTI analysis
 ${MRTrixDIR}/dwi2tensor dwi.mif -grad btable.b dt.mif

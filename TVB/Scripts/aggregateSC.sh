@@ -31,4 +31,4 @@ subFolder=$(pwd)/subjects
 cd ${subFolder}/${subID}/mrtrix_${numROI}/tracks_${numROI}
 
 # Start with the aggregation
-octave --eval "aggregateSC_cluster('${numROI}','${subID}_SC.mat','${subFolder}/${subID}/mrtrix_${numROI}/masks_${numROI}/wmborder.mat','${subID}')"
+octave --eval "aggregateSC('${subID}_SC.mat','${subFolder}/${subID}/mrtrix_${numROI}/masks_${numROI}/wmborder.mat','${subID}')"

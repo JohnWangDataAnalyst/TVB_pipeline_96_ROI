@@ -26,7 +26,7 @@
 #subID="PAT03T1"
 
 # Check input
-#rootPath=$(pwd)
+rootPath=$(pwd)
 subFolder=${rootPath}/subjects
 SUBJECTS_DIR=${subFolder}/${subID}
 
@@ -40,7 +40,12 @@ mkdir -p ${fmri_results}
 echo "*** Preparation ***"
 
 # Convert the raw DICOM Files to a single 4D-Nifti File (BOLD)
-mrconvert RAWDATA/BOLD-EPI/ ${fmri_results}/bold.nii.gz
+mrconvert RAWDATA/BOLD-EPI/ ${fmri_results}/bold1.nii.gz
+
+
+#### bandpass filter (0.01 - 0. Hz)
+fslmaths ${fmri_results}/bold1.nii.gz -bptf 20.8 2.08 ${fmri_results}/bold.nii.gz
+
 
 # Get the number of DICOMs in the RAWDATA-folder
 #numVol=$(ls -1 RAWDATA/BOLD-EPI/* | wc -l)
@@ -54,14 +59,8 @@ numVox=$(fslstats bold.nii.gz -v | cut -f 1 -d " ")
 # Convert freesurfer brainmask to NIFTI
 mri_convert --in_type mgz --out_type nii ${SUBJECTS_DIR}/recon_all/mri/brainmask.mgz brainmask.nii.gz
 
-<<<<<<< HEAD
-
-
-
-=======
->>>>>>> f6056c39dfd802e05a7bdf58fa6e25ad751cd2d5
 # Mask the brainmask using aparc+aseg
-mri_convert --in_type mgz --out_type nii ${SUBJECTS_DIR}/recon_all/mri/aparc+aseg.mgz aparc+aseg.nii.gz
+#mri_convert --in_type mgz --out_type nii ${SUBJECTS_DIR}/recon_all/mri/aparc+aseg.mgz aparc+aseg.nii.gz
 fslmaths brainmask.nii.gz -nan brainmask.nii.gz
 
 # Fieldmap correction: we don't have fieldmap

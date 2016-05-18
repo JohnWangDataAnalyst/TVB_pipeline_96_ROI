@@ -26,7 +26,7 @@
 #subID="PAT03T1"
 
 # Check input
-#rootPath=$(pwd)
+rootPath=$(pwd)
 subFolder=${rootPath}/subjects
 SUBJECTS_DIR=${subFolder}/${subID}
 
@@ -39,3 +39,11 @@ cd $fmri_results
 #echo "check" $FSLDIR $SGE_ROOT "FSLSUBALREADYRUN"
 feat feat.fsf
 
+file=featDir.feat/prefiltered_func_data_tempfilt.nii.gz
+while [ ! -f "$file" ]
+do
+sleep 1
+
+done
+
+sleep 2m

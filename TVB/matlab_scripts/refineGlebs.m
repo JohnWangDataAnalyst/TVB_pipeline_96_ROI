@@ -35,13 +35,13 @@ tic
 %                       53: Right-Hippocampus
 %                       54: Right-Amygdala
 %                       58: Right-Accumbens
-subcort_array = [10 11 12 13 17 18 26 49 50 51 52 53 54 58];
+subcort_array = [10 11 12 13 17 18 26 28 49 50 51 52 53 54 58 60];
 
 aseg = load_nii([subDir '/aparc+aseg.nii']);
 roimask = load_nii([subDir '/warped_rmask_2_t1.nii']);
 wm_outline = load_nii([subDir '/wm_outline_' numROI '.nii']); %Load with applying the transf. matrix to keep consistent when adding subcort. outline
 
-
+% nii: 68 ROI wit WM (2 and 41)
 nii = aseg;
 % High-res GM-WM-border
 nii.img(nii.img <  1001) = 0;
@@ -53,7 +53,7 @@ nii.img(aseg.img == 2) = 1; %Insert WM
 nii.img(aseg.img == 41) = 1; %Insert WM
 
 %Build a whitermatter mask by removing every entry from aparc+aseg but the
-%following: 2; 41; 251-255
+%following: 2; 41; 251-255  which is used for adding subcortical outline 
 wmmask = zeros(size(aseg.img));
 wmmask(aseg.img == 2) = 1;
 wmmask(aseg.img == 41) = 1;
@@ -68,6 +68,14 @@ tmp = aseg;
 tmp.img = wmmask;
 save_nii(tmp,[subDir '/wmmask_matlab.nii']);
 clear tmp
+
+% the following can be commented out
+wmmask1 = zeros(size(aseg.img));
+wmmask1(aseg.img == 2) = 1;
+wmmask1(aseg.img == 41) = 1;
+
+
+
 
 %Clean the Greymatter-Segmentation (i.e. remove Subcortical Structures except the Thalamus)
 without_subcort = aseg.img;
@@ -100,12 +108,13 @@ roimask.img(roimask.img == 0) = 1; %Set all Zeros to 1 (important later)
 
 %Asign the warped ROI-Values to the GM
 
-%UNCOMMENT ME!!!!! ++++++++++++++++++++++++++++++
+%UNCOMMENT ME!!!!! ++++++++++++++++++++++++++++++ get right 96 roi index from roimask
+
 greymatter = greymatter + (roimask.img - 1);
 
 
-% % Prepare the Outline of the Subcort. Regions
-% % subcort_array = [10 11 12 13 26 49 50 51 52 58];
+ % Prepare the Outline of the Subcort. Regions
+%  subcort_array = [10 11 12 13 26 49 50 51 52 58];
 % with_subcort = zeros(size(aseg.img,1),size(aseg.img,2),size(aseg.img,3));
 % edge_subcort = zeros(size(aseg.img,1),size(aseg.img,2),size(aseg.img,3));
 % for i = 1:length(subcort_array)
@@ -117,7 +126,7 @@ greymatter = greymatter + (roimask.img - 1);
 %     if(max(max(with_subcort(x,:,:))) > 0)
 %         for y = 1:size(with_subcort,2)
 %             for z = 1:size(with_subcort,3)
-%                 Check if there is a WM-Voxel in the direct neighbourhood
+%                 %Check if there is a WM-Voxel in the direct neighbourhood
 %                 if(with_subcort(x,y,z) == 1 && sum(sum(sum(with_subcort(x-1:x+1,y-1:y+1,z-1:z+1)))) < 27)
 %                 if(with_subcort(x,y,z) == 1 && sum(sum(sum(wmmask(x-1:x+1,y-1:y+1,z-1:z+1)))) > 0)
 %                     edge_subcort(x-1:x+1,y-1:y+1,z-1:z+1) = wmmask(x-1:x+1,y-1:y+1,z-1:z+1);
@@ -127,7 +136,10 @@ greymatter = greymatter + (roimask.img - 1);
 %         end
 %     end
 % end
-%edge_subcort = imdilate(reshape(with_subcort,size(with_subcort,1),[]),strel('disk',1));
+%end
+%SE=strel('disk',1);
+%isobject(SE)
+%edge_subcort = imdilate(reshape(with_subcort,size(with_subcort,1),[]),SE);
 %edge_subcort = reshape(edge_subcort,size(with_subcort)) - with_subcort;
 
 %clear with_subcort without_subcort
@@ -139,7 +151,7 @@ greymatter = greymatter + (roimask.img - 1);
 lvl_of_uncertainty = 9; 
 
 %The Radius of the Searchlight. If 1, the adjacent 26 Voxels are examined
-%etc...
+%etc...  Asign 96 ROI index for unassigned voxels ( with value 1) 
 search_radius = 1;
 
 zeros_greymatter_prev = -1;
@@ -173,7 +185,7 @@ while(nnz(greymatter == 1) > 0)
                 y = y_vec(i);
                 %if (x > 2 && x< size(greymatter,1)-1 && y > 2 && y < size(greymatter, 2)-1)
                 neighborhood = greymatter(x-search_radius:x+search_radius,y-search_radius:y+search_radius,z-search_radius:z+search_radius);
-                %neighborhood = neighborhood(neighborhood > 0); %Cut out the Zeros and Ones
+                neighborhood = neighborhood(neighborhood > 1); %Cut out the Zeros and Ones
                 
                 [m,f,c] = mode(neighborhood(:));
                 %end
@@ -200,8 +212,9 @@ while(nnz(greymatter == 1) > 0)
         %i.e. if there's a Voxel within the searchlight which was already
         %assigend this cycle skip the current Voxel
         if (f > 1)
-            [ind,dist] = knnsearch(result((result(:,5) > freqs(f)),:),temp1);
-           temp1(ind(floor(dist) == search_radius),:) = [];
+            %[ind,dist] = knnsearch(temp1,result((result(:,5) > freqs(f)),:));
+            [~,dist] = knnsearch(result((result(:,5) > freqs(f)),:), temp1);
+           temp1(floor(dist) == search_radius,:) = [];
         end
         
         for x = 1:size(temp1,1)
@@ -224,16 +237,30 @@ save_nii(aseg,[subDir '/GM_roied.nii'])
 
 %Project the Regions onto the Whitematter-Outline
 %wm_outline.img = wm_outline.img + edge_subcort;
+
+% make a copy of wm-outline.img one is used for adding subcortical outline then combine with the original one to get new outline
+wm_outline_tmp.img = wm_outline.img;
+
+
+%%% the following code is used to adding subcortical outline to wm_outline_img by assigning voxels in WM(2 41) to ROI index to the nearseast GM
+%%**************************************************************************
 %Binarize again
 wm_outline.img(wm_outline.img > 1) = 1;
 %Clear wm_outline from Voxels that don't belong to GM or WM (i.e. CC or
 %Subcort etc.)
 wm_outline.img(nii.img == 0) = 0;
 
+%wm_outline.img(greymatter == 0) = 0;
+
+
+%copy of wm-outline.img one is used for adding subcortical outline then combine with the original one to get new outline
+wm_outline_tmp.img = wm_outline.img;
+
+
 haystack = zeros(nnz(greymatter),3);
-nnz(greymatter)
 needle = zeros(nnz(wm_outline.img),3);
-nnz(greymatter)
+%needle = zeros(nnz(wmmask1),3);
+
 
 %wm_outline and greymatter must have the same img_size!
 %Go through the Greymatter/wm_outline to build the index
@@ -282,7 +309,70 @@ end
 
 
 %we need substract one from counter
-[IDX,D] = knnsearch(needle(1:(needle_count-1),:),haystack(1:(hay_count-1),:));
+[IDX,D] = knnsearch(haystack(1:(hay_count-1),:),needle(1:(needle_count-1),:));
+hay_count
+needle_count
+size(IDX)
+size(D)
+%Set all Values in the wm_outline that have no match within X Voxel
+%Distance to Zero (i.e. the Subcortical border...)
+VoxelDist = 1.8;
+
+I = find(D > VoxelDist);
+if ~isempty(I)
+max(I)
+min(I)
+size(I) 
+for x = 1:size(I,1)
+    wm_outline.img(needle(I(x),1),needle(I(x),2),needle(I(x),3)) = 0;
+end
+end
+%Assign each remaing value it's nearest Neighbour from the GM-Parcellation
+I = find(D <= VoxelDist);
+if ~isempty(I) 
+for x = 1:size(I,1)
+    %if wm_outline.img(needle(I(x),1),needle(I(x),2),needle(I(x),3))== 0
+    wm_outline.img(needle(I(x),1),needle(I(x),2),needle(I(x),3)) = greymatter(haystack(IDX(I(x)),1),haystack(IDX(I(x)),2),haystack(IDX(I(x)),3));
+    %else
+    %wm_outline.img(needle(I(x),1),needle(I(x),2),needle(I(x),3)) = 0;
+    %end 
+end
+end
+%wm_outline.img=wm_outline_tmp.img+wm_outline.img;
+%wm_outline.img(wm_outline.img > 1) = 1;
+%end of adding subcortical outline
+%*******************************************************************************
+
+
+
+%Using the same procedure to assign nonzero voxels in  wm_outline_tmp.img to right 96 ROI index
+%*******************************************************************************
+%{
+haystack = zeros(nnz(greymatter),3);
+needle = zeros(nnz(wm_outline_tmp.img),3);
+hay_count = 1;
+needle_count = 1;
+
+
+for x = 3:(len_x-3)   
+   if (max(max(greymatter(x,:,:))) > 0 && max(max(wm_outline_tmp.img(x,:,:))) > 0) %Skip the next loops if the whole slice is zero anyway
+       for y = 3:(len_y-3)
+          for z = 3:(len_z-3)
+             if (greymatter(x,y,z) > 0)
+                 haystack(hay_count,:) = [x y z];
+                 hay_count = hay_count + 1;
+             end
+             if (wm_outline_tmp.img(x,y,z) > 0)
+                 needle(needle_count,:) = [x y z];
+                 needle_count = needle_count + 1;
+             end
+          end
+       end
+   end
+end
+
+%we need substract one from counter
+[IDX,D] = knnsearch(haystack(1:(hay_count-1),:),needle(1:(needle_count-1),:));
 hay_count
 needle_count
 size(IDX)
@@ -295,27 +385,43 @@ I = find(D > VoxelDist);
 if ~isempty(I)
 max(I)
 min(I)
-size(I) 
+size(I)
 for x = 1:size(I,1)
-    wm_outline.img(needle(I(x),1),needle(I(x),2),needle(I(x),3)) = 0;
+    wm_outline_tmp.img(needle(I(x),1),needle(I(x),2),needle(I(x),3)) = 0;
 end
 end
 
 %Assign each remaing value it's nearest Neighbour from the GM-Parcellation
 I = find(D <= VoxelDist);
-if ~isempty(I) 
+if ~isempty(I)
 for x = 1:size(I,1)
-    wm_outline.img(needle(I(x),1),needle(I(x),2),needle(I(x),3)) = greymatter(haystack(IDX(I(x)),1),haystack(IDX(I(x)),2),haystack(IDX(I(x)),3));
+    wm_outline_tmp.img(needle(I(x),1),needle(I(x),2),needle(I(x),3)) = greymatter(haystack(IDX(I(x)),1),haystack(IDX(I(x)),2),haystack(IDX(I(x)),3));
 end
 end
+wm_outline.img=wm_outline_tmp.img+wm_outline.img;
+%}
+%******************************************************************************
 
-clear hay_count x y z needle_count IDX I D needle haystack
+
+%save new outline with subcortical as wm_outline_roied.nii clear hay_count x y z needle_count IDX I D needle haystack
 save_nii(wm_outline,[subDir '/wm_outline_roied.nii'])
 %Gzip the Files (saves lots of storage space but may slow down the process)
 %compress([subDir '/wm_outline_roied.nii']);
 
 toc
+% quality check
+max(max(max(greymatter)))
+ind_m=max(max(max(wm_outline.img)))
+%ROI_ind=[2:42 51:53 61:64 102:142 151:153 161:164];
+%for i =1: ind_m
+%  if ismember(i, ROI_ind) == 0 & isempty( wm_outline.img)==0
+%   quality = "not good"
+%  end
+%end 
 
+
+
+%{
 %% Quality Check
 rmask = load_untouch_nii([subDir '/rmask.nii']);
 greymatter = load_untouch_nii([subDir '/GM_roied.nii']);
@@ -390,3 +496,6 @@ end
 %     gzip({fileName})
 %     delete(fileName)
 % end
+%}
+
+end

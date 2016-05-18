@@ -32,14 +32,26 @@ subFolder=$(pwd)/subjects
 cp ${rootPath}/matlab_scripts/*.m ${subFolder}/${subID}/mrtrix_${numROI}/tracks_${numROI}
 cd ${subFolder}/${subID}/mrtrix_${numROI}/tracks_${numROI}
 
+filesDIR=${subFolder}/${subID}/mrtrix_${numROI}/masks_${numROI}
+
+#wmborderfile=${subFolder}/${subID}/mrtrix_${numROI}/masks_${numROI}/wmborder.mat
+
 # Generate a set of commands for the SC-jobs...
-if [ ! -f "compSCcommand.txt" ]; then
-	for i in {1..${numROI}}
+#if [ ! -f "compSCcommand.txt" ]; then
+	for i in {1..96}
 	do
-	 echo "computeSC_cluster('${numROI}','./','_tracks${subID}.tck','../masks_${numROI}/wmborder.mat',${i},'SC_row_${i}${subID}.mat')" >> compSCcommand.txt
+	 #if [ "${numROI}" = "96" ]
+	 #then
+	# echo "computeSC_cluster_96(${i},'SC_row_${i}${subID}.mat')" >> compSCcommand.txt
+	  octave --eval "computeSC_cluster_96('$filesDIR',${i},'SC_row_${i}${subID}.mat')" 
+
+         #else
+	 #echo "computeSC_clusterDK('./','_tracks${subID}.tck','../masks_${numROI}/wmborder.mat','${i}','SC_row_${i}${subID}.mat')" >> compSCcommand.txt
+	 #fi
 	done
-fi
+#fi
 
 # Compute SC matrices
-octaveCommand=$(<compSCcommand.txt)
-octave --eval "${octaveCommand}"
+#octaveCommand=$(<compSCcommand.txt)
+#octave --eval "${octaveCommand}"
+#matlab -nosplash -nodesktop -r "${octaveCommand};exit;"

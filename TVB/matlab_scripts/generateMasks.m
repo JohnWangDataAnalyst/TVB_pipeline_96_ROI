@@ -47,41 +47,45 @@ display(['Generating Masks for a Mask-Size of ' num2str(maskChunckSize) ' Voxels
 affine_matrix = inv(wmborder.hdr.info.mat);
 save([mask_output_folder 'affine_matrix.mat'], 'affine_matrix')
 
+nii=wmborder;
+
 % High-res GM-WM-border
-[nii.hdr,nii.img] = niak_read_vol([subPath 'calc_images/wmparc2diff_1mm.nii.gz']);
-nii.hdr.file_name = [mask_output_folder 'wmparcMask_1mm.nii.gz'];
+[GM_roied.hdr,GM_roied.img] = niak_read_vol([subPath 'calc_images/GM_roied2diff_1mm.nii.gz']);
+%nii.hdr.file_name = [mask_output_folder 'wmparcMask_1mm.nii.gz'];
 %nii=load_untouch_nii([subPath 'wmparc2diff_1mm.nii.gz']);
-nii.img(nii.img <  1001) = 0;
-nii.img(nii.img == 1004) = 0;
-nii.img(nii.img == 2004) = 0;
-nii.img(nii.img == 3004) = 0;
-nii.img(nii.img == 4004) = 0;
-nii.img(nii.img == 2000) = 0;
-nii.img(nii.img == 3000) = 0;
-nii.img(nii.img == 4000) = 0;
-nii.img(nii.img >  4035) = 0;
-nii.img(nii.img > 3000) = nii.img(nii.img > 3000) - 2000;
-nii.img(nii.img > 2036) = 0;
-nii.img(nii.img < 1001) = 0;
+%nii.img(nii.img <  1001) = 0;
+%nii.img(nii.img == 1004) = 0;
+%nii.img(nii.img == 2004) = 0;
+%nii.img(nii.img == 3004) = 0;
+%nii.img(nii.img == 4004) = 0;
+%nii.img(nii.img == 2000) = 0;
+%nii.img(nii.img == 3000) = 0;
+%nii.img(nii.img == 4000) = 0;
+%nii.img(nii.img >  4035) = 0;
+%nii.img(nii.img > 3000) = nii.img(nii.img > 3000) - 2000;
+%nii.img(nii.img > 2036) = 0;
+%nii.img(nii.img < 1001) = 0;
 %save_untouch_nii(nii,[mask_output_folder 'wmparcMask_1mm.nii.gz']);
-niak_write_vol(nii.hdr,nii.img);
+%niak_write_vol(nii.hdr,nii.img);
 %Gzip the Files (saves lots of storage space but may slow down the process)
 %compress([mask_output_folder 'wmparcMask_1mm.nii']);
 
 %wmborder=load_untouch_nii([subPath 'wmoutline2diff_1mm.nii.gz']);
-wmborder.img(wmborder.img > 0) = nii.img(wmborder.img > 0);
-wmborder.hdr.file_name = [mask_output_folder 'gmwmborder_1mm.nii.gz'];
+%wmborder.img(wmborder.img > 0) = nii.img(wmborder.img > 0);
+%wmborder.hdr.file_name = [mask_output_folder 'gmwmborder_1mm.nii.gz'];
 %save_untouch_nii(wmborder,[mask_output_folder 'gmwmborder_1mm.nii.gz']);
-niak_write_vol(wmborder.hdr,wmborder.img);
+%niak_write_vol(wmborder.hdr,wmborder.img);
 %Gzip the Files (saves lots of storage space but may slow down the process)
 %compress([mask_output_folder 'gmwmborder_1mm.nii']);
 
-%SUBCORT STUFF
-[nii.hdr,nii.img] = niak_read_vol([subPath 'calc_images/wmparc2diff_1mm.nii.gz']);
-for i = [10 49 11 50 12 13 51 52 17 18 53 54 26 28 58 60] %Define subcortical regions
-    wmborder.img(nii.img == i) = i;
-end
+wmborder1.img = wmborder.img;
 
+%SUBCORT STUFF
+%[nii.hdr,nii.img] = niak_read_vol([subPath 'calc_images/wmparc2diff_1mm.nii.gz']);
+for i = [2:42 51:53 61:64 102:142 151:153 161:164] %Define subcortical regions
+   wmborder.img(GM_roied.img == i) = i;
+end
+%wmborder.img(GM_roied.img == i) = i;
 
 img=wmborder.img;
 save([mask_output_folder 'wmborder.mat'], 'img')
@@ -89,46 +93,72 @@ save([mask_output_folder 'wmborder.mat'], 'img')
 % Seed & target masks
 counter=0;
 % for i = [1001:1003,1005:1035,2001:2003,2005:2035]
-for i = [10:13 17 18 26 28 1001:1003,1005:1035,49:54 58 60 2001:2003,2005:2035]
+for i = [2:42 51:53 61:64 102:142 151:153 161:164]
     display(['Processing RegionID ' num2str(i)]);
     
-    tmpimg=wmborder.img;
+    tmpimg=wmborder1.img;
+    %nnz(tmpimg)
     tmpimg(tmpimg ~= i) = 0;
     tmpimg(tmpimg > 0) = 1;
+    nnz(tmpimg)
     maskvoxel=find(tmpimg>0);
     nummasks=floor(length(maskvoxel)/maskChunckSize);
-    for j = 1:nummasks,
+    if nummasks > 0
+        for j = 1:nummasks,
         nii.img=zeros(size(tmpimg));
         nii.img(maskvoxel(1+(maskChunckSize*(j-1)):(maskChunckSize*j))) = 1;
         %save_untouch_nii(nii,[mask_output_folder 'seedmask' num2str(i) num2str(j) '_1mm.nii']);
-        nii.hdr.file_name = [mask_output_folder 'seedmask' num2str(i) num2str(j) '_1mm.nii.gz'];
-        niak_write_vol(nii.hdr,nii.img);
+        if j < 10
+        nii.hdr.file_name = [mask_output_folder 'seedmask' num2str(i) '.0' num2str(j) '_1mm.nii.gz'];
+        tmpfind=[num2str(i) '.0' num2str(j)];
+        else
+        nii.hdr.file_name = [mask_output_folder 'seedmask' num2str(i) '.' num2str(j) '_1mm.nii.gz'];
+        tmpfind=[num2str(i) '.' num2str(j)];
+        end
+        niak_write_vol(nii.hdr, nii.img);
         %Gzip the Files (saves lots of storage space but may slow down the process)
         %compress([mask_output_folder 'seedmask' num2str(i) num2str(j) '_1mm.nii']);
 
-        tmpfind=[num2str(i) num2str(j)];
+        %tmpfind=[num2str(i) '.' num2str(j)];
         counter=counter+1;
-        numseeds(counter,1)=str2num(tmpfind);
+        numseeds(counter,1)=str2double(tmpfind);
         numseeds(counter,2)=length(find(nii.img>0));
         numseeds(counter,3)=i;
+        end
     end
     nii.img=zeros(size(tmpimg));
     nii.img(maskvoxel(1+(maskChunckSize*nummasks):end)) = 1;
     %save_untouch_nii(nii,[mask_output_folder 'seedmask' num2str(i) num2str((nummasks+1)) '_1mm.nii.gz']);
-    nii.hdr.file_name = [mask_output_folder 'seedmask' num2str(i) num2str((nummasks+1)) '_1mm.nii.gz'];
+    
+    if nummasks < 9       
+         nii.hdr.file_name = [mask_output_folder 'seedmask' num2str(i) '.0' num2str(nummasks+1) '_1mm.nii.gz'];
+        tmpfind=[num2str(i) '.0' num2str(nummasks+1)];
+        else
+        nii.hdr.file_name = [mask_output_folder 'seedmask' num2str(i) '.' num2str(nummasks+1) '_1mm.nii.gz'];
+        tmpfind=[num2str(i) '.' num2str(nummasks+1)];
+    end
+      
+    
+    #nii.hdr.file_name = [mask_output_folder 'seedmask' num2str(i) '.' num2str((nummasks+1)) '_1mm.nii.gz'];
     niak_write_vol(nii.hdr,nii.img);
     %Gzip the Files (saves lots of storage space but may slow down the process)
     %compress([mask_output_folder 'seedmask' num2str(i) num2str((nummasks+1)) '_1mm.nii']);
 
-    tmpfind=[num2str(i) num2str(nummasks+1)];
+    #tmpfind=[num2str(i) '.'  num2str(nummasks+1)];
     counter=counter+1;
     numseeds(counter,1)=str2num(tmpfind);
     numseeds(counter,2)=length(find(nii.img>0));
     numseeds(counter,3)=i;
         
+    %tmpimg1=GM_roied.img;
     tmpimg=wmborder.img;
     tmpimg(tmpimg == i) = 0;
     tmpimg(tmpimg > 0) = 1;
+    %tmpimg1(tmpimg1 == i) = 0;
+    %tmpimg1(tmpimg1 > 0) = 1;
+    %tmpimg=tmpimg+tmpimg1;
+    %tmpimg(tmpimg > 0);    
+
     nii.img=tmpimg;
     %save_untouch_nii(nii,[mask_output_folder 'targetmask' num2str(i) '_1mm.nii.gz']);
     nii.hdr.file_name = [mask_output_folder 'targetmask' num2str(i) '_1mm.nii.gz'];

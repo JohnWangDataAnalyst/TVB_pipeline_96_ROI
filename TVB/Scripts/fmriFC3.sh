@@ -26,15 +26,20 @@
 #subID="PAT03T1"
 
 # Check input
-#rootPath=$(pwd)
+rootPath=$(pwd)
 subFolder=${rootPath}/subjects
 SUBJECTS_DIR=${subFolder}/${subID}
 
 fmri_results=${subFolder}/${subID}/bold
 
 cd $fmri_results
+cp $SUBJECTS_DIR/calc_images/GM_roied.nii.gz ./
+
+####segment on T1 subject
+fast -t 1 -n 3 -H 0.1 -I 4 -l 20.0 -g --nopve -o $subID brainmask.nii.gz
 
 # Register example-func to freesurfer brainmask
+mkdir featDir.feat/reg
 mkdir featDir.feat/reg/freesurfer
 flirt -in featDir.feat/mean_func.nii.gz -ref brainmask.nii.gz -out exfunc2anat_6DOF.nii.gz \
 -omat exfunc2anat_6DOF.mat -bins 256 -cost corratio -searchrx -90 90 -searchry -90 90 \
@@ -43,23 +48,34 @@ flirt -in featDir.feat/mean_func.nii.gz -ref brainmask.nii.gz -out exfunc2anat_6
 # Invert transformation
 convert_xfm -omat anat2exfunc.mat -inverse exfunc2anat_6DOF.mat
 
-<<<<<<< HEAD
+# Transform roimask(using GM_roied instead of aparc+aseg) CSF (_seg_0) and WM (_seg_2)  to functional space using FLIRT (using Nearest Neighbor Interpolation for roimask)
 
-if ${numROI} == 96
-then
-roimask = ${SUBJECTS_DIR}/calc.images/GM_roied.nii
-else
-roimask = aparc+aseg.nii.gz
-end
-
-
-# Transform roimask to functional space using FLIRT (using Nearest Neighbor Interpolation for roimask)
-flirt -in ${roimask} -applyxfm -init anat2exfunc.mat -out featDir.feat/reg/freesurfer/aparc+aseg.nii.gz \
-=======
-# Transform roimask to functional space using FLIRT (using Nearest Neighbor Interpolation for roimask)
-flirt -in aparc+aseg.nii.gz -applyxfm -init anat2exfunc.mat -out featDir.feat/reg/freesurfer/aparc+aseg.nii.gz \
->>>>>>> f6056c39dfd802e05a7bdf58fa6e25ad751cd2d5
+if [ ${numROI} = "96" ]; then
+flirt -in GM_roied.nii.gz -applyxfm -init anat2exfunc.mat -out featDir.feat/reg/freesurfer/aparc+aseg.nii.gz \
 -paddingsize 0.0 -interp nearestneighbour -ref featDir.feat/mean_func.nii.gz
+else
+mri_convert --in_type mgz --out_type nii ${SUBJECTS_DIR}/recon_all/mri/aparc+aseg.mgz aparc+aseg.nii.gz
+flirt -in aparc+aseg.nii.gz -applyxfm -init anat2exfunc.mat -out featDir.feat/reg/freesurfer/aparc+aseg.nii.gz \
+-paddingsize 0.0 -interp nearestneighbour -ref featDir.feat/mean_func.nii.gz
+fi
+
+
+flirt -in ${subID}_seg_0 -applyxfm -init anat2exfunc.mat -out featDir.feat/reg/freesurfer/CSF2exfunc.nii.gz \
+-paddingsize 0.0 -interp nearestneighbour -ref featDir.feat/mean_func.nii.gz
+
+flirt -in ${subID}_seg_2 -applyxfm -init anat2exfunc.mat -out featDir.feat/reg/freesurfer/WM2exfunc.nii.gz \
+-paddingsize 0.0 -interp nearestneighbour -ref featDir.feat/mean_func.nii.gz
+
+###use fslmeants to get average timeseries for each of CSF and WM
+fslmeants -i featDir.feat/filtered_func_data.nii.gz -o CSF.txt -m featDir.feat/reg/freesurfer/CSF2exfunc.nii.gz
+fslmeants -i featDir.feat/filtered_func_data.nii.gz -o WM.txt -m featDir.feat/reg/freesurfer/WM2exfunc.nii.gz
+
+###using paste to merger txt files in column
+paste CSF.txt WM.txt featDir.feat/mc/prefiltered_func_data_mcf.par | column -s $'\t' -t > nuisance
+
+
+###regress out CSF and WM
+fsl_glm -i featDir.feat/filtered_func_data.nii.gz -d nuisance --out_res=featDir.feat/filtered_func_data.nii.gz
 
 # Export average region time-series
 mri_segstats --seg featDir.feat/reg/freesurfer/aparc+aseg.nii.gz --sum ${fmri_results}/aparc_stats.txt --i featDir.feat/filtered_func_data.nii.gz --avgwf ${subID}_ROIts.dat
@@ -72,5 +88,5 @@ rm ${fmri_results}/aparc_stats_tmp.txt
 
 # Create FC matrix
 cp ${rootPath}/matlab_scripts/compFC.m ./compFC.m
-octave --eval "compFC('${fmri_results}','${subID}')"
+octave --eval "compFC('${numROI}','${fmri_results}','${subID}')"
 
