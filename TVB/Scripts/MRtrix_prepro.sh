@@ -43,15 +43,25 @@ ${MRTrixDIR}/mrconvert ${subFolder}/${subID}/calc_images/wmmask_${numROI}.nii.gz
 ${MRTrixDIR}/mrconvert ${subFolder}/${subID}/calc_images/wmmask_1mm_${numROI}.nii.gz wmmask_1mm.mif
 mkdir -p tracks_${numROI}
 
+if [ "$numDwi" == "2" ]
+then
+## for two dwi scans
+${MRTrixDIR}/mrconvert ${subFolder}/${subID}/RAWDATA/DTI/dwi.nii.gz dwi.mif
+#{MRTrixDIR}/mrinfo ${subFolder}/${subID}/RAWDATA/DTI/ -grad btable.b
+$cat ${subFolder}/${subID}/dt_recon/btable1.b ${subFolder}/${subID}/dt_recon/btable2.b > btable.b
+################################################################################
+
+elif [ "$dwi_dtype" == "mgz" ]
+then
 #Convert RAWDATA to MRTrix Format
 ${MRTrixDIR}/mrconvert ${subFolder}/${subID}/RAWDATA/DTI/ dwi.mif
 ${MRTrixDIR}/mrinfo ${subFolder}/${subID}/RAWDATA/DTI/ -grad btable.b
-#######################################################################
-## for two dwi scans
-#{MRTrixDIR}/mrconvert ${subFolder}/${subID}/RAWDATA/DTI/dwi.nii.gz dwi.mif
-#{MRTrixDIR}/mrinfo ${subFolder}/${subID}/RAWDATA/DTI/ -grad btable.b
-#cat ${subFolder}/${subID}/dt_recon/btable1.b ${subFolder}/${subID}/dt_recon/btable2.b > btable.b
-################################################################################
+
+else
+#Convert RAWDATA to MRTrix Format
+${MRTrixDIR}/mrconvert ${subFolder}/${subID}/RAWDATA/DTI/${subID}_dwi.nii.gz dwi.mif
+cp ${subFolder}/${subID}/RAWDATA/DTI/btable.b ./
+fi
 
 #DTI analysis
 ${MRTrixDIR}/dwi2tensor dwi.mif -grad btable.b dt.mif

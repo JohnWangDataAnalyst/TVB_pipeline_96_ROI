@@ -39,7 +39,7 @@ cd $fmri_results
 #echo "check" $FSLDIR $SGE_ROOT "FSLSUBALREADYRUN"
 feat feat.fsf
 
-file=featDir.feat/prefiltered_func_data_tempfilt.nii.gz
+file=featDir.feat/filtered_func_data.nii.gz
 while [ ! -f "$file" ]
 do
 sleep 1

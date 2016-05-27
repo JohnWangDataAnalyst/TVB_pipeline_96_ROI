@@ -33,7 +33,16 @@ SUBJECTS_DIR=${subFolder}/${subID}
 fmri_results=${subFolder}/${subID}/bold
 
 cd $fmri_results
+
+
+if [ "$numROI" == "96" ]
+then
 cp $SUBJECTS_DIR/calc_images/GM_roied.nii.gz ./
+Aparc=GM_roied.nii.gz
+else
+mri_convert --in_type mgz --out_type nii ${SUBJECTS_DIR}/recon_all/mri/aparc+aseg.mgz aparc+aseg.nii.gz
+Aparc=aparc+aseg.nii.gz
+fi
 
 ####segment on T1 subject
 fast -t 1 -n 3 -H 0.1 -I 4 -l 20.0 -g --nopve -o $subID brainmask.nii.gz
@@ -50,14 +59,9 @@ convert_xfm -omat anat2exfunc.mat -inverse exfunc2anat_6DOF.mat
 
 # Transform roimask(using GM_roied instead of aparc+aseg) CSF (_seg_0) and WM (_seg_2)  to functional space using FLIRT (using Nearest Neighbor Interpolation for roimask)
 
-if [ ${numROI} = "96" ]; then
-flirt -in GM_roied.nii.gz -applyxfm -init anat2exfunc.mat -out featDir.feat/reg/freesurfer/aparc+aseg.nii.gz \
+
+flirt -in $Aparc -applyxfm -init anat2exfunc.mat -out featDir.feat/reg/freesurfer/aparc+aseg.nii.gz \
 -paddingsize 0.0 -interp nearestneighbour -ref featDir.feat/mean_func.nii.gz
-else
-mri_convert --in_type mgz --out_type nii ${SUBJECTS_DIR}/recon_all/mri/aparc+aseg.mgz aparc+aseg.nii.gz
-flirt -in aparc+aseg.nii.gz -applyxfm -init anat2exfunc.mat -out featDir.feat/reg/freesurfer/aparc+aseg.nii.gz \
--paddingsize 0.0 -interp nearestneighbour -ref featDir.feat/mean_func.nii.gz
-fi
 
 
 flirt -in ${subID}_seg_0 -applyxfm -init anat2exfunc.mat -out featDir.feat/reg/freesurfer/CSF2exfunc.nii.gz \

@@ -33,11 +33,26 @@ subFolder=${rootPath}/subjects
 #############################################################
 
 echo "*** Load data & recon_all ***"
+
+
+if [ "$T1_dtype" == "mgz" ]
+then
+
+
 firstFile=$(ls ${subFolder}/${subID}/RAWDATA/MPRAGE/ | sort -n | head -1)
 
 recon-all -i ${subFolder}/${subID}/RAWDATA/MPRAGE/${firstFile} -subjid recon_all -sd ${subFolder}/${subID} -openmp 8  -all
 
 mri_convert --in_type mgz --out_type nii --out_orientation RAS ${subFolder}/${subID}/recon_all/mri/aparc+aseg.mgz ${subFolder}/${subID}/recon_all/mri/aparc+aseg.nii
+
+else
+
+recon-all -i ${subFolder}/${subID}/RAWDATA/MPRAGE/MPRAGE.nii.gz -subjid recon_all -sd ${subFolder}/${subID} -openmp 8  -all
+
+mri_convert --in_type mgz --out_type nii --out_orientation RAS ${subFolder}/${subID}/recon_all/mri/aparc+aseg.mgz ${subFolder}/${subID}/recon_all/mri/aparc+aseg.nii
+
+
+fi
 
 T1=${subFolder}/${subID}/recon_all/mri/T1.mgz
 

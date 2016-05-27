@@ -40,9 +40,15 @@ mkdir -p ${fmri_results}
 echo "*** Preparation ***"
 
 # Convert the raw DICOM Files to a single 4D-Nifti File (BOLD)
+
+if [ "$fmri_dtype" == "mgz" ]
+then
+
 mrconvert RAWDATA/BOLD-EPI/ ${fmri_results}/bold1.nii.gz
+else
+cp  RAWDATA/BOLD-EPI/bold1.nii.gz ${fmri_results}/bold1.nii.gz
 
-
+fi
 #### bandpass filter (0.01 - 0. Hz)
 fslmaths ${fmri_results}/bold1.nii.gz -bptf 20.8 2.08 ${fmri_results}/bold.nii.gz
 

@@ -64,14 +64,13 @@ FC_cc(isnan(FC_cc)) = 0;
 FC_cc_DK68 = FC_cc([start1:stop1 start2:stop2],[start1:stop1 start2:stop2]);
 
 %Store timeseries
-v = genvarname([subName '_ROIts']);
+v = genvarname(['M' subName '_ROIts']);
 eval([v '= fMRI;']);
 
-v = genvarname([subName '_ROIts', numROI]);
+v = genvarname(['M' subName '_ROIts' numROI]);
 eval([v '= fMRI_DK68;']);
 
-%save([path '/' subName '_fMRI_new.mat'],[subName '_ROIts'],'FC_cc','FC_mi','ROI_ID_table');
-save([path '/' subName '_fMRI_new.mat'],'-mat7-binary',[subName '_ROIts'],[subName '_ROIts', numROI],'FC_cc_DK68','FC_cc','FC_mi','ROI_ID_table');
+save([path '/' subName '_fMRI_new.mat'],'-mat7-binary',['M' subName '_ROIts'],['M' subName '_ROIts' numROI],'FC_cc_DK68','FC_cc','FC_mi','ROI_ID_table');
 
 end
 

@@ -43,12 +43,15 @@ echo "*** Load data & dt_recon ***"
 #Extract the diffusion vecto2rs and the pulse intensity (bvec & bval)
 dt_recon=${subFolder}/${subID}/dt_recon
 mkdir $dt_recon
-${MRTrixDIR}/mrinfo ${subFolder}/${subID}/RAWDATA/DTI/ -grad ${dt_recon}/btable.b
-cut -f 1,2,3 ${dt_recon}/btable.b > ${dt_recon}/bvec
-cut -f 4 ${dt_recon}/btable.b > ${dt_recon}/bval
 
-: <<'END'
-#################################################################################
+
+############################################################################################################################
+#depends on the type of Dwi file and the number of scan to choose the way to do recon-dt
+
+if [ "$numDwi" != "0" ]
+then
+if [ "$numDwi" == "2" ]
+then
 ##change for two DTI scans 
 ${MRTrixDIR}/mrinfo ${subFolder}/${subID}/RAWDATA/DTI1/ -grad ${dt_recon}/btable1.b
 cut -f 1,2,3 ${dt_recon}/btable1.b > ${dt_recon}/bvec1
@@ -70,18 +73,27 @@ ${MRTrix3DIR}/mrconvert ${subFolder}/${subID}/RAWDATA/DTI2/ ${subFolder}/${subID
 mri_concat --i ${subFolder}/${subID}/RAWDATA/DTI/dwi1.nii.gz ${subFolder}/${subID}/RAWDATA/DTI/dwi2.nii.gz --o ${subFolder}/${subID}/RAWDATA/DTI/dwi.nii.gz
 cat ${dt_recon}/bvec1 ${dt_recon}/bvec2 > ${dt_recon}/bvec
 cat ${dt_recon}/bval1 ${dt_recon}/bval2 > ${dt_recon}/bval
+dt_recon --i ${subFolder}/${subID}/RAWDATA/DTI/dwi.nii.gz --b ${dt_recon}/bval ${dt_recon}/bvec --sd ${subFolder}/${subID} --s recon_all --no-ec --o ${subFolder}/${subID}/dt_recon
 
-#################################################################################
-END
+elif  [ "$dwi_dtype" == "mgz" ]
+then
+${MRTrixDIR}/mrinfo ${subFolder}/${subID}/RAWDATA/DTI/ -grad ${dt_recon}/btable.b
+cut -f 1,2,3 ${dt_recon}/btable.b > ${dt_recon}/bvec
+cut -f 4 ${dt_recon}/btable.b > ${dt_recon}/bval
 
-#Get the Name of the First file in the Dicom-Folder
 firstFile=$(ls ${subFolder}/${subID}/RAWDATA/DTI/ | sort -n | head -1)
-#dt_recon --i ${subFolder}/${subID}/RAWDATA/DTI/dwi.nii.gz --b ${dt_recon}/bval ${dt_recon}/bvec --sd ${subFolder}/${subID} --s recon_all --no-ec --o ${subFolder}/${subID}/dt_recon
-
 dt_recon --i ${subFolder}/${subID}/RAWDATA/DTI/${firstFile} --b ${dt_recon}/bval ${dt_recon}/bvec --sd ${subFolder}/${subID} --s recon_all --no-ec --o ${subFolder}/${subID}/dt_recon
-#uses FSL eddy_correct: don't do with high b-values!
+
+else
+
+cp ${subFolder}/${subID}/RAWDATA/DTI/* ${dt_recon}/
+dt_recon --i ${subFolder}/${subID}/RAWDATA/DTI/${subID}_dwi.nii.gz --b ${dt_recon}/${subID}_dwi.bval ${dt_recon}/${subID}_dwi.bvec --sd ${subFolder}/${subID} --s recon_all --no-ec --o ${subFolder}/${subID}/dt_recon
+
+fi
+fi
+###################################################################################################################################
+
 #END
-#echo "comment end"
 
 echo "*** WM surface ***"
 mkdir -p ${subFolder}/${subID}/calc_images
@@ -102,10 +114,21 @@ gzip <wm_outline_${numROI}.nii> wm_outline_${numROI}.nii.gz
 ##############################################################################
 if [ "$numROI" == "96" ]
 then
+
+if [ "$templateMNI" == "yes" ]
+then
 # template 96 ROI Mask
-roimask=/home/jwang/data/ROI96/RMtoATNS70warped_r.nii.gz
+
+
+roimask=/home/jwang/data/ROI96/RM_inMNI.nii.gz
+ANTS=${FSLDIR}/data/standard/MNI152_T1_1mm_brain_mask.nii.gz
+else
+roimask=${templatePath}/RM_in${templateFilename}
+ANTS=${templatePath}/${templateFilename}
+fi
+
 # Template of standard brain we are using brain of 70-74 year-old people
-ANTS=/home/jwang/data/MNI/ANTS70-74Years_head_brain.nii.gz
+#ANTS=/home/jwang/data/MNI/ANTS70-74Years_head_brain.nii.gz
 #MNIMask=${FSLDIR}/data/standard/MNI152_T1_1mm_brain_mask.nii.gz
 
 
@@ -195,8 +218,13 @@ lowb=${subFolder}/${subID}/dt_recon/lowb.nii
 mri_convert --out_orientation LIA --in_orientation RAS wm_outline_roied.nii.gz wm_outline_roied.nii.gz
 mri_convert --out_orientation LIA --in_orientation RAS GM_roied.nii.gz GM_roied.nii.gz
 
-
+if [ "$numROI" == "96" ]
+then
 wm_outline=${subFolder}/${subID}/calc_images/wm_outline_roied.nii.gz
+else
+wm_outline=${subFolder}/${subID}/calc_images/wm_outline_${numROI}.nii.gz
+fi
+
 rule=${subFolder}/${subID}/dt_recon/register.dat
 
 #Rotate high-res (1mm) WM-border to match dwi data w/o resampling
@@ -221,9 +249,15 @@ fslmaths wmoutline2diff_1mm.nii.gz -thr 0.1 wmoutline2diff_1mm.nii.gz
 #mri_vol2vol --mov $lowb --targ wmparc.nii.gz --inv --interp nearest --o wmparc2diff_1mm.nii --reg $rule --no-save-reg --no-resample
 mri_vol2vol --mov $lowb --targ ${subFolder}/${subID}/recon_all/mri/wmparc.mgz --inv --interp nearest --o wmparc2diff_1mm.nii --reg $rule --no-save-reg --no-resample
 
-#Rotate high-res (1mm) GM_roied.nii to match dwi data w/o resampling
-mri_vol2vol --mov $lowb --targ GM_roied.nii.gz --inv --interp nearest --o GM_roied2diff_1mm.nii --reg $rule --no-save-reg --no-resample
 
+
+#Rotate high-res (1mm) GM_roied.nii to match dwi data w/o resampling
+if [ "$numROI" == "96" ]
+then
+mri_vol2vol --mov $lowb --targ GM_roied.nii.gz --inv --interp nearest --o GM_roied2diff_1mm.nii --reg $rule --no-save-reg --no-resample
+gzip GM_roied2diff_1mm.nii
+
+fi
 
 #Rotate high-res (1mm) aparc+aseg to match dwi data w/o resampling
 #adding this one to get orientation right with the others
@@ -239,7 +273,6 @@ mri_vol2vol --mov $lowb --targ ${subFolder}/${subID}/recon_all/mri/aparc+aseg.mg
 #GZip the Files
 #gzip wmoutline2diff_1mm.nii
 gzip wmparc2diff_1mm.nii
-gzip GM_roied2diff_1mm.nii
 #gzip wmoutline2diff.nii
 
 echo "*** Create brainmasks ***"
