@@ -44,16 +44,35 @@ statFile = dir([path '/aparc*stats_cleared*']);
 statFile = statFile(1).name;
 %ROI_ID_table = importfile([path '/' statFile]);
 ROI_ID_table = dlmread([path '/' statFile]);
-numRow = size(ROI_ID_table,1)
+size(ROI_ID_table)
+numRow = size(ROI_ID_table,1);
+numCol = size(ROI_ID_table,2);
 %Clear the ROI-Table and leave only Desikan-Entries
 start1 = numRow- str2num(numROI)
 stop1 = start1+int64(str2num(numROI) / 2) -1
 start2 = stop1+2
 stop2 = numRow
+ROI_ind = [2:42 51:53 61:64 102:142 151:153 161:164];
+ROI_list = ROI_ID_table(:,2);
+cnt=0;
+for i=1:str2num(numROI)
+if i <= str2num(numROI)/2
+   if sum(find(ROI_ind(i) == ROI_list)) == 0
+         fMRI_DK68(:,i) = zeros(size(fMRI,1),1);
+         cnt = cnt +1;
+   else
+         fMRI_DK68(:,i) =fMRI(:,i-cnt);
+   end
+else
+   if sum(find(ROI_ind(i) == ROI_list)) == 0
+         fMRI_DK68(:,i) = zeros(size(fMRI,1),1);
+          cnt = cnt +1;
+   else
+         fMRI_DK68(:,i) =fMRI(:, i+1-cnt);
+   end
+end
+end
 
-fMRI_DK68 = fMRI(:,[start1:stop1 start2:stop2]);
-
-%Compute FC
 FC_cc=corr(fMRI);
 FC_mi=FastPairMI(zscore(fMRI)',0.3);
 
@@ -61,7 +80,7 @@ FC_mi=FastPairMI(zscore(fMRI)',0.3);
 FC_cc(isnan(FC_cc)) = 0;
 
 %Cross out DK68
-FC_cc_DK68 = FC_cc([start1:stop1 start2:stop2],[start1:stop1 start2:stop2]);
+FC_cc_DK68 = corr(fMRI_DK68);
 
 %Store timeseries
 v = genvarname(['M' subName '_ROIts']);
